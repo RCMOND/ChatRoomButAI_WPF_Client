@@ -1,0 +1,20 @@
+<Window x:Class="ChatClientWpf.RegisterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="注册" Height="450" Width="400"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid Background="White">
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center" Padding="30">
+            <StackPanel Width="300">
+                <TextBlock Text="注册新账号" FontSize="24" FontWeight="Bold" 
+                           Foreground="#5865F2" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                <TextBox x:Name="txtUsername" Margin="0,5" Padding="10" Height="36"/>
+                <PasswordBox x:Name="txtPassword" Margin="0,5" Padding="10" Height="36"/>
+                <PasswordBox x:Name="txtConfirm" Margin="0,5" Padding="10" Height="36"/>
+                <Button Content="注册" Height="36" Background="#10B981" Foreground="White" 
+                        FontWeight="Bold" Click="BtnRegister_Click" Margin="0,10"/>
+                <TextBlock x:Name="txtError" Foreground="Red" HorizontalAlignment="Center" Margin="0,5"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
