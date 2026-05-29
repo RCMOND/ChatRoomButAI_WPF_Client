@@ -50,6 +50,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         _httpClient.Timeout = TimeSpan.FromSeconds(10);
         lbMessages.ItemsSource = _messages;
+          _ = AppConfig.ServerBaseUrl;
     }
 
     public void InitializeAndStart(string token, string username)
