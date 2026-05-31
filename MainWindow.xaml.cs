@@ -117,7 +117,14 @@ public partial class MainWindow : Window
         _connection.On<string>("UserLeft", user =>
             Dispatcher.Invoke(() => _messages.Add(new MessageItem { User = "系统", Text = $"{user} 离开了聊天室", Avatar = DefaultAvatar })));
 
-        _connection.On<string>("Kickout", msg => Dispatcher.Invoke(() => { MessageBox.Show(msg, "被踢下线"); Logout(); }));
+        _connection.On<string>("Kickout", msg =>
+{
+    Dispatcher.Invoke(() =>
+    {
+        MessageBox.Show(msg, "被踢下线", MessageBoxButton.OK, MessageBoxImage.Warning);
+        Logout();   // 调用退出方法
+    });
+});
         _connection.On<string>("Muted", msg => Dispatcher.Invoke(() => MessageBox.Show(msg, "禁言通知")));
 
         _connection.On<string>("Announcement", text =>
@@ -499,32 +506,52 @@ public partial class MainWindow : Window
 
     private void BtnLogout_Click(object sender, RoutedEventArgs e) => Logout();
 
-    private async void Logout()
+   private async void Logout()
+{
+    if (_isClosed) return;
+    _isClosed = true;
+    _isLoggingOut = true;
+
+    // 断开 SignalR 连接
+    if (_connection != null)
     {
-        if (_isClosed) return;
-        _isClosed = true;
-        _isLoggingOut = true;
-        if (_connection != null)
+        try
         {
-            try { if (_connection.State == HubConnectionState.Connected) await _connection.StopAsync(); await _connection.DisposeAsync(); } catch { }
-            _connection = null;
+            if (_connection.State == HubConnectionState.Connected)
+                await _connection.StopAsync();
+            await _connection.DisposeAsync();
         }
-        _announcementTimer?.Stop(); _announcementTimer = null;
-        _onlineUsersTimer?.Stop(); _onlineUsersTimer = null;
-        ClearCredentials();
-        Dispatcher.Invoke(() =>
-        {
-            _messages.Clear();
-            lbOnlineUsers.ItemsSource = null;
-            txtMyUsername.Text = "未登录";
-            UpdateMyAvatarDisplay(DefaultAvatar);
-            brdMusicBar.Visibility = Visibility.Visible;
-            StopMusic();
-            this.Close();
-        });
-        Application.Current.Dispatcher.BeginInvoke(new Action(() => { new LoginWindow().Show(); }));
+        catch { }
+        _connection = null;
     }
 
+    // 停止所有定时器
+    _announcementTimer?.Stop();
+    _announcementTimer = null;
+    _onlineUsersTimer?.Stop();
+    _onlineUsersTimer = null;
+
+    // 清除本地保存的凭据
+    ClearCredentials();
+
+    // UI 清理
+    Dispatcher.Invoke(() =>
+    {
+        _messages.Clear();
+        lbOnlineUsers.ItemsSource = null;
+        txtMyUsername.Text = "未登录";
+        UpdateMyAvatarDisplay(DefaultAvatar);
+        brdMusicBar.Visibility = Visibility.Visible;
+        StopMusic();
+        this.Close();   // 关闭当前聊天窗口
+    });
+
+    // 打开新的登录窗口（必须在新的 Dispatcher 周期）
+    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+    {
+        new LoginWindow().Show();
+    }));
+}
     private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
         if (!_isClosed) { e.Cancel = true; Logout(); return; }
@@ -556,3 +583,4 @@ public class ProgressStreamContent : HttpContent
     }
     protected override bool TryComputeLength(out long length) { if (_stream.CanSeek) { length = _stream.Length; return true; } length = -1; return false; }
 }
+
